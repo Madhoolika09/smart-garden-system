@@ -1,0 +1,59 @@
+#include <LiquidCrystal.h>
+
+// LCD: RS, E, D4, D5, D6, D7
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+
+const int soilPin = A0;
+const int tempPin = A1;
+const int pumpLED = 7;
+const int stopLED = 8;
+const int dryThreshold = 600;
+
+void setup() {
+  pinMode(pumpLED, OUTPUT);
+  pinMode(stopLED, OUTPUT);
+  lcd.begin(16, 2);
+  Serial.begin(9600);
+  lcd.setCursor(0, 0);
+  lcd.print("Smart Garden");
+  lcd.setCursor(0, 1);
+  lcd.print("Starting...");
+  delay(1500);
+  lcd.clear();
+}
+
+void loop() {
+  int soilValue = analogRead(soilPin);
+  int tempReading = analogRead(tempPin);
+  float voltage = tempReading * (5.0 / 1023.0);
+  float temperature = (voltage - 0.5) * 100.0;
+  bool soilDry = (soilValue > dryThreshold);
+
+  if (soilDry) {
+    digitalWrite(pumpLED, HIGH);
+    digitalWrite(stopLED, LOW);
+  } else {
+    digitalWrite(pumpLED, LOW);
+    digitalWrite(stopLED, HIGH);
+  }
+
+  lcd.setCursor(0, 0);
+  lcd.print("Soil:");
+  lcd.print(soilDry ? "DRY " : "WET ");
+  lcd.print("V:");
+  lcd.print(soilValue);
+  lcd.print("   ");
+  lcd.setCursor(0, 1);
+  lcd.print("T:");
+  lcd.print(temperature, 1);
+  lcd.print("C P:");
+  lcd.print(soilDry ? "ON " : "OFF");
+  
+  Serial.print("Soil value: ");
+  Serial.print(soilValue);
+  Serial.print(" | Temperature: ");
+  Serial.print(temperature, 1);
+  Serial.print(" C | Pump: ");
+  Serial.println(soilDry ? "ON" : "OFF");
+  delay(1000);
+}
